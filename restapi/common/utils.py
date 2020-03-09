@@ -20,6 +20,18 @@ def user_parser():
     return parser
 
 
+def tweet_parser():
+    """Tweet argument parsing."""
+    parser = reqparse.RequestParser()
+    parser.add_argument(
+        'body',
+        type=str,
+        required=True,
+        help='required body'
+    )
+    return parser
+
+
 def min_length_str(min_length):
     """Check password length."""
     def validate(s):
