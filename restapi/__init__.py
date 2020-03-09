@@ -8,6 +8,7 @@ from .common.connection import db
 from .config import Config
 from .model.user import User as UserModel
 from .resource.hello import Helloworld
+from .resource.tweet import Tweet
 from .resource.user import User, UserList
 
 jwt = JWT(None, UserModel.authenticate, UserModel.identity)
@@ -25,4 +26,5 @@ def create_app():
     api.add_resource(Helloworld, '/')
     api.add_resource(User, '/user/<string:username>')
     api.add_resource(UserList, '/users')
+    api.add_resource(Tweet, '/tweet/<string:username>')
     return app
