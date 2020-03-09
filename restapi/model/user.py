@@ -1,10 +1,11 @@
-"""Database ORM models."""
+"""User Database ORM models."""
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from ..common.connection import db
+from .base import Base
 
 
-class User(db.Model):
+class User(Base):
     """Table for user."""
 
     __tablename__ = 'user'
@@ -19,21 +20,11 @@ class User(db.Model):
             self.id, self.username
         )
 
-    def as_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
-
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-
-    def add(self):
-        db.session.add(self)
-        db.session.commit()
-
-    def update(self):
-        db.session.commit()
 
     @classmethod
     def get_by_username(cls, username):
@@ -42,10 +33,6 @@ class User(db.Model):
     @classmethod
     def get_by_id(cls, user_id):
         return cls.query.filter_by(id=user_id).first()
-
-    def delete(self):
-        db.session.delete(self)
-        db.session.commit()
 
     @classmethod
     def get_all_user(cls):
