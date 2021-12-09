@@ -1,5 +1,8 @@
 """Create and configure the app."""
+from apispec import APISpec
+from apispec.ext.marshmallow import MarshmallowPlugin
 from flask import Flask
+from flask_apispec.extension import FlaskApiSpec
 from flask_jwt import JWT
 from flask_migrate import Migrate
 from flask_restful import Api
@@ -23,6 +26,18 @@ def create_app(config_name='development'):
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
+
+    app.config.update({
+        'APISPEC_SPEC': APISpec(
+            title='Flask Restful Project',
+            version='v1',
+            plugins=[MarshmallowPlugin()],
+            openapi_version='2.0.0'
+        ),
+        'APISPEC_SWAGGER_URL': '/swagger/',
+        'APISPEC_SWAGGER_UI_URL': '/swagger-ui/'
+    })
+    docs = FlaskApiSpec(app)
 
     api.add_resource(Helloworld, '/')
     api.add_resource(User, '/user/<string:username>')
