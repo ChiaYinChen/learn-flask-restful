@@ -45,4 +45,5 @@ def create_app(config_name='development'):
     api.add_resource(Tweet, '/tweet/<string:username>')
     docs.register(User)
     docs.register(UserList)
+    docs.register(Tweet)
     return app

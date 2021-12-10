@@ -1,29 +1,37 @@
+from flask_apispec import doc, use_kwargs
+from flask_apispec.views import MethodResource
 from flask_jwt import current_identity, jwt_required
 from flask_restful import Resource
 
-from ..common import utils
 from ..model.tweet import Tweet as TweetModel
 from ..model.user import User as UserModel
+from ..schema.tweet import TweetCreate
 
 
-class Tweet(Resource):
+@doc(
+    tags=['Tweet'],
+    params={
+        'Authorization': {
+            'description': 'Authorization: Bearer <access_token>',
+            'in': 'header',
+            'type': 'string',
+            'required': True
+        }
+    }
+)
+class Tweet(MethodResource, Resource):
 
-    def __init__(self, *args, **kwargs):
-        """Init."""
-        super().__init__(*args, **kwargs)
-        self.parser = utils.tweet_parser()
-
+    @use_kwargs(TweetCreate, location=('json'))
     @jwt_required()
-    def post(self, username):
+    def post(self, username, **kwargs):
         """Create a tweet by username."""
         if current_identity.username != username:
             return {'message': 'Please use the right token.'}
         user = UserModel.get_by_username(username)
         if not user:
             return {'message': 'User not found.'}, 404
-        data = self.parser.parse_args()
         tweet = TweetModel(
-            body=data['body'],
+            body=kwargs.get('body'),
             user_id=user.id
         )
         tweet.add()
