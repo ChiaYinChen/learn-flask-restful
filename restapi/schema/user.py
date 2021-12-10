@@ -18,4 +18,4 @@ class UserCreate(UserBase):
 
 class User(UserBase):
     """Output."""
-    pass
+    id = fields.Int()

@@ -55,10 +55,22 @@ class User(MethodResource, Resource):
             return make_response({'message': 'User not found.'}, 404)
 
 
-class UserList(Resource):
+@doc(tags=['Users'])
+class UserList(MethodResource, Resource):
 
+    @doc(
+        params={
+            'authorization': {
+                'description': '111Authorization: Bearer <access_token>',
+                'in': 'header',
+                'type': 'string',
+                'required': True
+            }
+        }
+    )
+    @marshal_with(UserOutput(many=True))
     @jwt_required()
     def get(self):
         """Get user list."""
         users = UserModel.get_all_user()
-        return [user.as_dict() for user in users]
+        return users
