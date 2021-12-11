@@ -6,6 +6,8 @@ from flask_apispec.extension import FlaskApiSpec
 from flask_jwt import JWT
 from flask_migrate import Migrate
 from flask_restful import Api
+from webargs.core import DEFAULT_VALIDATION_STATUS
+from webargs.flaskparser import abort, parser
 
 from .common.connection import db
 from .config import app_config
@@ -16,6 +18,23 @@ from .resource.user import User, UserList
 
 migrate = Migrate()
 jwt = JWT(None, UserModel.authenticate, UserModel.identity)
+
+
+# ref: https://github.com/marshmallow-code/webargs/issues/181
+# This error handler is necessary for usage with Flask-RESTful
+@parser.error_handler
+def handle_request_parsing_error(
+    err, req, schema, *, error_status_code, error_headers
+):
+    """webargs error handler that uses Flask-RESTful's abort function to return
+    a JSON error response to the client.
+    """
+    status_code = error_status_code or DEFAULT_VALIDATION_STATUS
+    abort(
+        status_code,
+        exc=err,
+        messages=err.messages,
+    )
 
 
 def create_app(config_name='development'):
