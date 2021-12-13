@@ -1,69 +1,76 @@
+from flask import make_response
+from flask_apispec import doc, marshal_with, use_kwargs
+from flask_apispec.views import MethodResource
 from flask_jwt import jwt_required
 from flask_restful import Resource
 
-from ..common import utils
 from ..model.user import User as UserModel
+from ..schema.user import User as UserOutput
+from ..schema.user import UserCreate
 
 
-class User(Resource):
-
-    def __init__(self, *args, **kwargs):
-        """Init."""
-        super().__init__(*args, **kwargs)
-        self.parser = utils.user_parser()
+@doc(tags=['User'])
+@marshal_with(UserOutput)
+class User(MethodResource, Resource):
 
     def get(self, username):
         """Get user detail information."""
         user = UserModel.get_by_username(username)
         if user:
-            return user.as_dict()
-        return {'message': 'User not found.'}, 404
+            return user
+        return make_response({'message': 'User not found.'}, 404)
 
-    def post(self, username):
+    @use_kwargs(UserCreate, location=('json'))
+    def post(self, username, **kwargs):
         """Create a user."""
-        data = self.parser.parse_args()
         user = UserModel.get_by_username(username)
         if user:
-            return {'message': 'User already exist.'}
+            return make_response({'message': 'User already exist.'}, 200)
         user = UserModel(
             username=username,
-            email=data['email']
+            email=kwargs.get('email')
         )
-        user.set_password(data['password'])
+        user.set_password(kwargs.get('password'))
         user.add()
-        return {
-            'message': 'Insert user success.',
-            'user': user.as_dict()
-        }, 201
+        return user, 201
 
     def delete(self, username):
         """Delete user."""
         user = UserModel.get_by_username(username)
         if user:
             user.delete()
-            return {'message': 'User deleted.'}
+            return make_response({'message': 'User deleted.'}, 200)
         else:
-            return {'message': 'User not found.'}, 404
+            return make_response({'message': 'User not found.'}, 404)
 
-    def put(self, username):
+    @use_kwargs(UserCreate, location=('json'))
+    def put(self, username, **kwargs):
         """Update user."""
         user = UserModel.get_by_username(username)
         if user:
-            data = self.parser.parse_args()
-            user.password_hash = data['password']
+            user.set_password(kwargs.get('password'))
             user.update()
-            return {
-                'message': 'Update user success.',
-                'user': user.as_dict()
-            }
+            return user
         else:
-            return {'message': 'User not found.'}, 404
+            return make_response({'message': 'User not found.'}, 404)
 
 
-class UserList(Resource):
+@doc(tags=['Users'])
+class UserList(MethodResource, Resource):
 
+    @doc(
+        params={
+            'authorization': {
+                'description': '111Authorization: Bearer <access_token>',
+                'in': 'header',
+                'type': 'string',
+                'required': True
+            }
+        }
+    )
+    @marshal_with(UserOutput(many=True))
     @jwt_required()
     def get(self):
         """Get user list."""
         users = UserModel.get_all_user()
-        return [user.as_dict() for user in users]
+        return users
